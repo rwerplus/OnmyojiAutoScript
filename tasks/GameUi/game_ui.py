@@ -30,7 +30,7 @@ class GameUi(BaseTask, GameUiAssets):
                 page_shikigami_records, page_onmyodo, page_friends, page_daily, page_mall, page_guild, page_team,
                 page_collection
                 ]
-    ui_close = [GameUiAssets.I_BACK_MALL,
+    ui_close = [GameUiAssets.I_BACK_MALL, RestartAssets.I_LOGIN_SCROOLL_CLOSE,
                 BaseTask.I_UI_BACK_RED, BaseTask.I_UI_BACK_YELLOW, BaseTask.I_UI_BACK_BLUE,
                 GameUiAssets.I_BACK_FRIENDS, GameUiAssets.I_BACK_DAILY,
                 GameUiAssets.I_REALM_RAID_GOTO_EXPLORATION,
@@ -141,9 +141,6 @@ class GameUi(BaseTask, GameUiAssets):
             # if self.appear_then_click(GOTO_MAIN, offset=(30, 30), interval=2) or self.ui_additional():
             #     timeout.reset()
             #     continue
-
-            if self.ensure_scroll_open():
-                self.click(RestartAssets.I_LOGIN_SCROOLL_CLOSE)
 
             app_check()
             minicap_check()

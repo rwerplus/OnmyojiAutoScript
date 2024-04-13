@@ -30,7 +30,8 @@ class ConfigMenu:
         self.menu["Guild"] = ['KekkaiUtilize', 'KekkaiActivation', 'RealmRaid', 'RyouToppa', 'CollectiveMissions',
                               'Hunt']
         # 每周任务
-        self.menu["Weekly Task"] = ['TrueOrochi', 'RichMan', 'Secret', 'WeeklyTrifles', 'MysteryShop', 'Duel']
+        self.menu["Weekly Task"] = ['TrueOrochi', 'RichMan', 'Secret', 'WeeklyTrifles', 'MysteryShop', 'Duel',
+                                    'SixRealmsGates']
         # 活动的任务
         self.menu["Activity Task"] = ['ActivityShikigami', 'MetaDemon', 'FrogBoss']
         # 开发工具

@@ -10,7 +10,7 @@ from tasks.Component.config_base import ConfigBase, TimeDelta, DateTime, Time
 
 class Scheduler(ConfigBase):
     enable: bool = Field(default=False, description='enable_help')
-    next_run: DateTime = Field(default="2023-01-01 00:00:00", description='next_run_help')
+    next_run: DateTime = Field(default="2024-01-01 00:00:00", description='next_run_help')
     priority: int = Field(default=5, description='priority_help')
 
     success_interval: TimeDelta = Field(default=TimeDelta(days=1), description='success_interval_help')

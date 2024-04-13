@@ -312,7 +312,7 @@ Item {
     function add(){
         const item ={}
         item["itemName"] = "new"
-        item["imageName"] = "image_name.png"
+        item["imageName"] = "res_check_moon_sea.png"
         item["roiFront"] = "0,0,100,100"
         item["roiBack"] = "0,0,100,100"
         item["method"] = "Template matching"

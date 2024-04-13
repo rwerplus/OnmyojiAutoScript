@@ -18,7 +18,7 @@ class ConfigManual:
         > TrueOrochi > RichMan
         > CollectiveMissions
         > Pets > TalismanPass > SoulsTidy > Delegation
-        > Secret > WeeklyTrifles > MysteryShop > Duel > MetaDemon > FrogBoss
+        > Secret > WeeklyTrifles > MysteryShop > Duel > SixRealmsGatesRaid > MetaDemon > FrogBoss
         """
 
     DEVICE_OVER_HTTP = False

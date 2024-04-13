@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
+from tasks.SixRealmsGates.config import SixRealmsGatesRaid
 from typing import Dict, Any
 
 import re
@@ -119,6 +120,8 @@ class ConfigModel(ConfigBase):
     collective_missions: CollectiveMissions = Field(default_factory=CollectiveMissions)
     hunt: Hunt = Field(default_factory=Hunt)
 
+    # 六道之门
+    six_realms_gates: SixRealmsGatesRaid = Field(default_factory=SixRealmsGatesRaid)
     # @validator('script')
     # def script_validator(cls, v):
     #     if v is None:

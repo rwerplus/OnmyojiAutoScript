@@ -1,0 +1,29 @@
+[
+  {
+    "itemName": "six_gate_switch",
+    "imageName": "res_six_gate_switch.png",
+    "roiFront": "409,295,25,22",
+    "roiBack": "409,295,25,22",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "six_gate_moon",
+    "imageName": "res_six_gate_moon.png",
+    "roiFront": "593,156,72,42",
+    "roiBack": "593,156,72,42",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "check_moon_sea",
+    "imageName": "res_check_moon_sea.png",
+    "roiFront": "349,138,25,21",
+    "roiBack": "349,138,25,21",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  }
+]
