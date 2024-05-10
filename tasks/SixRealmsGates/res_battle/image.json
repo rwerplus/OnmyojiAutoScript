@@ -1,0 +1,200 @@
+[
+  {
+    "itemName": "soft_wind",
+    "imageName": "res_battle_soft_wind.png",
+    "roiFront": "289,196,66,43",
+    "roiBack": "289,196,66,43",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "trickle_down",
+    "imageName": "res_battle_trickle_down.png",
+    "roiFront": "606,195,68,44",
+    "roiBack": "606,195,68,44",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "drizzle",
+    "imageName": "res_battle_drizzle.png",
+    "roiFront": "926,192,55,47",
+    "roiBack": "926,192,55,47",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "is_select_mask",
+    "imageName": "res_battle_is_select_mask.png",
+    "roiFront": "31,647,50,35",
+    "roiBack": "31,647,50,35",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "select_random_fight_1",
+    "imageName": "res_battle_select_random_fight_1.png",
+    "roiFront": "283,300,31,87",
+    "roiBack": "283,300,31,87",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "select_random_fight_2",
+    "imageName": "res_battle_select_random_fight_2.png",
+    "roiFront": "710,373,27,82",
+    "roiBack": "710,373,27,82",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "select_random_fight_3",
+    "imageName": "res_battle_select_random_fight_3.png",
+    "roiFront": "1034,303,28,73",
+    "roiBack": "1034,303,28,73",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "is_choose_to_fight",
+    "imageName": "res_battle_is_choose_to_fight.png",
+    "roiFront": "111,242,37,29",
+    "roiBack": "111,242,37,29",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "normal_shiki_1",
+    "imageName": "res_battle_normal_shiki_1.png",
+    "roiFront": "409,204,37,40",
+    "roiBack": "409,204,37,40",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "normal_shiki_2",
+    "imageName": "res_battle_normal_shiki_2.png",
+    "roiFront": "716,232,34,37",
+    "roiBack": "716,232,34,37",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "choose_to_challenge",
+    "imageName": "res_battle_choose_to_challenge.png",
+    "roiFront": "1134,591,95,90",
+    "roiBack": "1134,591,95,90",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "choose_shiki",
+    "imageName": "res_battle_choose_shiki.png",
+    "roiFront": "652,438,24,26",
+    "roiBack": "652,438,24,26",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "is_end_fight_confirm",
+    "imageName": "res_battle_is_end_fight_confirm.png",
+    "roiFront": "1137,583,60,52",
+    "roiBack": "1137,583,60,52",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "is_confirm_to_close",
+    "imageName": "res_battle_is_confirm_to_close.png",
+    "roiFront": "549,655,170,29",
+    "roiBack": "549,655,170,29",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "select_random_fight_4",
+    "imageName": "res_battle_select_random_fight_4.png",
+    "roiFront": "375,401,22,71",
+    "roiBack": "375,401,22,71",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "select_random_fight_5",
+    "imageName": "res_battle_select_random_fight_5.png",
+    "roiFront": "906,436,23,76",
+    "roiBack": "906,436,23,76",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "elite_shiki_1",
+    "imageName": "res_battle_elite_shiki_1.png",
+    "roiFront": "602,194,56,60",
+    "roiBack": "602,194,56,60",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "attempt_find_wind",
+    "imageName": "res_battle_attempt_find_wind.png",
+    "roiFront": "1195,622,46,44",
+    "roiBack": "1195,622,46,44",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "need_to_select_1",
+    "imageName": "res_battle_soft_wind.png",
+    "roiFront": "462,192,58,48",
+    "roiBack": "156,156,1010,144",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "柔风"
+  },
+  {
+    "itemName": "need_to_select_2",
+    "imageName": "res_battle_drizzle.png",
+    "roiFront": "462,192,58,48",
+    "roiBack": "156,156,1010,144",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "细雨"
+  },
+  {
+    "itemName": "need_to_select_3",
+    "imageName": "res_battle_trickle_down.png",
+    "roiFront": "462,192,58,48",
+    "roiBack": "156,156,1010,144",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "涓流"
+  },
+  {
+    "itemName": "need_to_select_4",
+    "imageName": "res_battle_drizzle.png",
+    "roiFront": "462,192,58,48",
+    "roiBack": "156,156,1010,144",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  }
+]
