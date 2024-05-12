@@ -146,6 +146,9 @@ class GameUi(BaseTask, GameUiAssets):
             minicap_check()
             rotation_check()
 
+        if self.ensure_scroll_open():
+            self.ui_click_until_disappear(RestartAssets.I_LOGIN_SCROOLL_CLOSE)
+
         # Unknown page, need manual switching
         logger.warning("Unknown ui page")
         logger.attr("EMULATOR__SCREENSHOT_METHOD", self.config.script.device.screenshot_method)
