@@ -89,16 +89,31 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                         continue
                     if not self.appear(self.I_G_REJECT):
                         break
-            # 最后一个是仅仅接受勾协
+            # 如果是仅接受勾协
             elif invite and self.config.global_game.emergency.friend_invitation == FriendInvitation.ONLY_JADE:
                 logger.info(f"Accept jade invitation")
                 while 1:
                     self.device.screenshot()
-                    if self.appear_then_click(self.I_G_ACCEPT, interval=1):
+                    if self.appear(self.I_G_JADE):
+                        if self.appear_then_click(self.I_G_ACCEPT, interval=1):
+                            continue
+                    elif self.appear_then_click(self.I_G_IGNORE, interval=1):
                         continue
                     if not self.appear(self.I_G_ACCEPT):
                         break
-            # 全部忽略
+            # 如果是接受勾协和粮协
+            elif invite and self.config.global_game.emergency.friend_invitation == FriendInvitation.JADE_AND_FOOD:
+                logger.info(f"Accept jade and food invitation")
+                while 1:
+                    self.device.screenshot()
+                    if self.appear(self.I_G_JADE) or self.appear(self.I_G_CAT_FOOD) or self.appear(self.I_G_DOG_FOOD):
+                        if self.appear_then_click(self.I_G_ACCEPT, interval=1):
+                            continue
+                    elif self.appear_then_click(self.I_G_IGNORE, interval=1):
+                        continue
+                    if not self.appear(self.I_G_ACCEPT):
+                        break
+            # 如果是全部忽略
             elif invite and self.config.global_game.emergency.friend_invitation == FriendInvitation.IGNORE:
                 logger.info(f"Ignore friend invitation")
                 while 1:
@@ -476,6 +491,8 @@ class BaseTask(GlobalGameAssets, CostumeBase):
         :param click_image:
         :return:
         """
+        _timer = Timer(10)
+        _timer.start()
         while 1:
             self.screenshot()
 
@@ -492,6 +509,9 @@ class BaseTask(GlobalGameAssets, CostumeBase):
                     if self.ui_reward_appear_click():
                         continue
                 break
+            if _timer.reached():
+                logger.warning('Get reward timeout')
+                break
 
             if isinstance(click_image, RuleImage):
                 if self.appear_then_click(click_image, interval=click_interval):
@@ -502,6 +522,7 @@ class BaseTask(GlobalGameAssets, CostumeBase):
             elif isinstance(click_image, RuleClick):
                 if self.click(click_image, interval=click_interval):
                     continue
+
 
         return True
 

@@ -27,6 +27,10 @@ class Shrine(GameUi, RichManAssets):
                 break
             if self.click(self.C_C_SHRINE, interval=1):
                 continue
+            # if self.appear_then_click(self.I_CENTER1, interval=1):
+            #     continue
+            # if self.appear_then_click(self.I_CENTER2, interval=1):
+            #     continue
         logger.info('Enter Shrine')
         time.sleep(0.5)
         if con.black_daruma:
@@ -126,7 +130,6 @@ class Shrine(GameUi, RichManAssets):
 if __name__ == '__main__':
     from module.config.config import Config
     from module.device.device import Device
-    from memory_profiler import profile
 
     c = Config('oas1')
     d = Device(c)

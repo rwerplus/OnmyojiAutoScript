@@ -34,13 +34,14 @@ def detect_ocr(file: str, target: RuleOcr):
 
 
 # 图片文件路径 可以是相对路径
-IMAGE_FILE = r"C:\Users\Ryland\Desktop\QQ截图20240407130042.png"
+IMAGE_FILE = r"C:\Users\萌萌哒\Desktop\349772746-36423909-af3d-4d9c-bae4-9d2597e2ecda.png"
 if __name__ == '__main__':
-    from tasks.KekkaiActivation.assets import KekkaiActivationAssets
+    from tasks.RyouToppa.assets import RyouToppaAssets
     from tasks.GameUi.assets import GameUiAssets
-
-    targe = GameUiAssets.I_MAIN_GOTO_TEAM
+    targe = GameUiAssets.I_MAIN_GOTO_GUILD
     print(detect_image(IMAGE_FILE, targe))
+
+    # ocr demo
     # from tasks.KekkaiActivation.assets import KekkaiActivationAssets
     # target = KekkaiActivationAssets.O_CARD_ALL_TIME
     # print(detect_ocr(IMAGE_FILE, target))
