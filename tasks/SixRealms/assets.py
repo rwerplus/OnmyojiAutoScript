@@ -10,6 +10,13 @@ from module.atom.list import RuleList
 class SixRealmsAssets: 
 
 
+	# Click Rule Assets
+	# description 
+	C_MAIN_ANIMATE_KEEP = RuleClick(roi_front=(565,7,100,215), roi_back=(565,7,100,215), name="main_animate_keep")
+	# description 
+	C_STORE_ANIMATE_KEEP = RuleClick(roi_front=(825,87,317,466), roi_back=(825,87,317,466), name="store_animate_keep")
+
+
 	# Image Rule Assets
 	# 大boss挑战 
 	I_BOSS_FIRE = RuleImage(roi_front=(1128,576,100,100), roi_back=(1091,557,156,147), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_boss_fire.png")
@@ -26,7 +33,11 @@ class SixRealmsAssets:
 	# description 
 	I_BOSS_SHARE = RuleImage(roi_front=(1090,604,70,74), roi_back=(1074,587,100,100), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_boss_share.png")
 	# 结算的椒图 
-	I_BOSS_SHUTU = RuleImage(roi_front=(535,241,240,330), roi_back=(500,216,292,377), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_boss_shutu.png")
+	I_BOSS_SHUTU = RuleImage(roi_front=(108,141,173,122), roi_back=(108,141,173,122), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_boss_shutu.png")
+	# description 
+	I_BOSS_BATTLE_AGAIN = RuleImage(roi_front=(435,403,173,64), roi_back=(409,390,212,100), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_boss_battle_again.png")
+	# description 
+	I_BOSS_BATTLE_GIVEUP = RuleImage(roi_front=(671,399,175,59), roi_back=(649,381,219,100), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_boss_battle_giveup.png")
 
 
 	# Click Rule Assets
@@ -36,6 +47,20 @@ class SixRealmsAssets:
 	C_NPC_FIRE_RIGHT = RuleClick(roi_front=(740,248,181,180), roi_back=(740,248,181,180), name="npc_fire_right")
 	# 中间的精英 
 	C_NPC_FIRE_CENTER = RuleClick(roi_front=(620,188,174,217), roi_back=(620,188,174,217), name="npc_fire_center")
+	# 默认的 
+	C_ISLAND_ENTER = RuleClick(roi_front=(0,0,100,100), roi_back=(0,0,100,100), name="island_enter")
+	# 右数第一个 
+	C_ISLAND_ENTER_1 = RuleClick(roi_front=(1012,349,136,221), roi_back=(1012,349,136,221), name="island_enter_1")
+	# description 
+	C_ISLAND_ENTER_2 = RuleClick(roi_front=(825,341,143,224), roi_back=(825,341,143,224), name="island_enter_2")
+	# description 
+	C_ISLAND_ENTER_3 = RuleClick(roi_front=(694,338,115,222), roi_back=(694,338,115,222), name="island_enter_3")
+	# description 
+	C_ISLAND_ENTER_4 = RuleClick(roi_front=(501,323,141,243), roi_back=(501,323,141,243), name="island_enter_4")
+	# description 
+	C_ISLAND_ENTER_5 = RuleClick(roi_front=(319,332,149,237), roi_back=(319,332,149,237), name="island_enter_5")
+	# description 
+	C_ISLAND_ENTER_6 = RuleClick(roi_front=(162,265,136,302), roi_back=(162,265,136,302), name="island_enter_6")
 
 
 	# Image Rule Assets
@@ -69,15 +94,21 @@ class SixRealmsAssets:
 	I_BACK_EXIT = RuleImage(roi_front=(11,18,51,47), roi_back=(0,0,100,100), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_back_exit.png")
 	# 可以购买的幻息 
 	I_M_STORE_ACTIVITY = RuleImage(roi_front=(1121,596,72,57), roi_back=(1107,573,100,100), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_m_store_activity.png")
+	# description 
+	I_MSTART_CONFIRM2 = RuleImage(roi_front=(1154,581,74,85), roi_back=(1079,535,196,177), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_mstart_confirm2.png")
+	# 动画完了就有这个东西 
+	I_ISLAND_TAG_FLAG = RuleImage(roi_front=(543,601,100,100), roi_back=(543,601,100,100), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_island_tag_flag.png")
 
 
 	# Ocr Rule Assets
 	# Ocr-description 
-	O_OCR_MAP = RuleOcr(roi=(191,286,944,197), area=(191,286,944,197), mode="Full", method="Default", keyword="", name="ocr_map")
+	O_OCR_MAP = RuleOcr(roi=(144,227,989,376), area=(144,227,989,376), mode="Full", method="Default", keyword="", name="ocr_map")
 	# Ocr-description 
 	O_ISLAND_NAME = RuleOcr(roi=(88,17,148,49), area=(88,17,148,49), mode="Single", method="Default", keyword="", name="island_name")
 	# 有多少钱 
 	O_COIN_NUM = RuleOcr(roi=(1171,23,59,31), area=(1171,23,59,31), mode="Digit", method="Default", keyword="", name="coin_num")
+	# Ocr-description 
+	O_SKILL_REFRESH = RuleOcr(roi=(1172,684,100,31), area=(1172,684,100,31), mode="Single", method="Default", keyword="", name="skill_refresh")
 
 
 	# Image Rule Assets
@@ -101,13 +132,26 @@ class SixRealmsAssets:
 	I_SELECT_3 = RuleImage(roi_front=(1016,581,145,43), roi_back=(1000,550,173,100), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_select_3.png")
 	# 六道的金币 
 	I_COIN = RuleImage(roi_front=(612,345,66,53), roi_back=(405,229,561,270), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_coin.png")
+	# 六道的金币 
+	I_COIN2 = RuleImage(roi_front=(612,345,66,53), roi_back=(405,229,561,270), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_coin.png")
+	# 洞察之力 
+	I_SKILL105 = RuleImage(roi_front=(178,187,80,69), roi_back=(112,149,779,151), threshold=0.8, method="Template matching", file="./tasks/SixRealms/gate1/gate1_skill105.png")
 
 
 	# Image Rule Assets
 	# 宁息刷新 
 	I_STORE_REFRESH = RuleImage(roi_front=(545,596,46,47), roi_back=(519,568,100,100), threshold=0.8, method="Template matching", file="./tasks/SixRealms/l101/l101_store_refresh.png")
 	# 购买柔风 
-	I_STORE_SKILL_101 = RuleImage(roi_front=(876,121,47,41), roi_back=(682,100,455,571), threshold=0.8, method="Template matching", file="./tasks/SixRealms/l101/l101_store_skill_101.png")
+	I_STORE_SKILL_101 = RuleImage(roi_front=(876,121,47,41), roi_back=(682,100,455,571), threshold=0.9, method="Template matching", file="./tasks/SixRealms/l101/l101_store_skill_101.png")
+	# description 
+	I_STORE_EXIT = RuleImage(roi_front=(1179,586,59,56), roi_back=(1161,561,100,100), threshold=0.8, method="Template matching", file="./tasks/SixRealms/l101/l101_store_exit.png")
+	# 稳定标志 
+	I_STORE_STABLE_FLAG = RuleImage(roi_front=(1028,251,28,27), roi_back=(1011,241,63,47), threshold=0.8, method="Template matching", file="./tasks/SixRealms/l101/l101_store_stable_flag.png")
+
+
+	# Ocr Rule Assets
+	# 刷新次数 
+	O_STORE_REFRESH_TIME = RuleOcr(roi=(538,661,110,27), area=(538,661,110,27), mode="Single", method="Default", keyword="", name="store_refresh_time")
 
 
 	# Image Rule Assets
@@ -123,7 +167,7 @@ class SixRealmsAssets:
 
 	# Image Rule Assets
 	# description 
-	I_L103_EXIT = RuleImage(roi_front=(1161,600,69,70), roi_back=(1161,600,69,70), threshold=0.8, method="Template matching", file="./tasks/SixRealms/l103/l103_exit.png")
+	I_L103_EXIT = RuleImage(roi_front=(1171,587,69,70), roi_back=(1078,538,195,180), threshold=0.8, method="Template matching", file="./tasks/SixRealms/l103/l103_exit.png")
 
 
 	# Image Rule Assets
