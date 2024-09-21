@@ -75,14 +75,6 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
             if self.timer_wait.reached():
                 logger.warning('Wait timeout')
                 return False
-            if self.timer_invite and self.timer_invite.reached():
-                if is_first:
-                    logger.info('Invitation is triggered every 20s')
-                    self.timer_invite.reset()
-                else:
-                    logger.info('Wait for 30s and invite again')
-                    self.timer_invite = None
-                self.invite_friends(config)
             if self.appear(self.I_MATCHING):
                 logger.warning('Timeout, now is no room')
                 return False
@@ -94,7 +86,6 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
                 self.timer_emoji.reset()
                 self.appear_then_click(self.I_GI_EMOJI_1)
                 self.appear_then_click(self.I_GI_EMOJI_2)
-
 
             fire = False  # 是否开启挑战
             # 如果这个房间最多只容纳两个人（意思是只可以邀请一个人），且已经邀请一个人了，那就开启挑战
@@ -129,6 +120,15 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
             if fire:
                 self.click_fire()
                 return True
+
+            if self.timer_invite and self.timer_invite.reached():
+                if is_first:
+                    logger.info('Invitation is triggered every 20s')
+                    self.timer_invite.reset()
+                else:
+                    logger.info('Wait for 30s and invite again')
+                    self.timer_invite = None
+                self.invite_friends(config)
 
     def ensure_enter(self) -> bool:
         """
@@ -351,6 +351,9 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
         list_2 = self.O_F_LIST_2.ocr(self.device.image)
         list_3 = self.O_F_LIST_3.ocr(self.device.image)
         list_4 = self.O_F_LIST_4.ocr(self.device.image)
+        list_1 = list_1.replace(' ', '').replace('、', '')
+        list_2 = list_2.replace(' ', '').replace('、', '')
+        list_3 = list_3.replace(' ', '').replace('、', '')
         if list_1 is not None and list_1 != '' and list_1 in self.friend_class:
             friend_class.append(list_1)
         if list_2 is not None and list_2 != '' and list_2 in self.friend_class:
