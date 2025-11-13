@@ -31,7 +31,7 @@ class ScriptTask(GameUi, FloatParadeAssets, TalismanPassAssets):
                 continue
         logger.info('Goback to float parade main page')
         # 收取花车等级奖励
-        self.get_flower(con.level_reward)
+        self.get_flower(con.level_reward1, con.level_reward2) # 第一种
         # main page
         self.ui_get_current_page()
         self.ui_goto(page_main)
@@ -53,7 +53,11 @@ class ScriptTask(GameUi, FloatParadeAssets, TalismanPassAssets):
                 continue
             if self.appear_then_click(self.I_FP_RED_CLOSE, interval=1.5):
                 continue
+            if self.appear_then_click(self.I_FP_GIFT_CLOSE, interval=3):
+                continue
             if self.appear_then_click(self.I_FP_TASKS, interval=1.8):
+                continue
+            if self.appear_then_click(self.I_TOGGLE_BUTTON, interval=3):
                 continue
         logger.info('Enter float parade')
         logger.info('Click get all reward')
@@ -63,7 +67,7 @@ class ScriptTask(GameUi, FloatParadeAssets, TalismanPassAssets):
         self.ui_get_reward(self.I_FP_GETALL1)
         logger.info('Got all reward')
 
-    def get_flower(self, level: LevelReward = LevelReward.TWO):
+    def get_flower(self, level1: LevelReward = LevelReward.TWO, level2: LevelReward = LevelReward.TWO):
         """
         收取花合战等级奖励
         :return:
@@ -84,8 +88,23 @@ class ScriptTask(GameUi, FloatParadeAssets, TalismanPassAssets):
         check_timer.start()
         while 1:
             self.screenshot()
-            if self.appear_then_click(match_level[level], interval=0.8):
-                logger.info(f'Select {level} reward')
+            # 批量选择
+            if self.appear_then_click(self.I_BATCH_SELECTION, interval=1.5):
+                continue
+            if self.appear_then_click(self.I_BATCH_SELECTION_CONFIRM, interval=0.8):
+                continue
+
+            if self.appear(self.I_FP_GIFT_FLAG1) and self.appear_then_click(match_level[level1], interval=0.8):
+                logger.info(f'Select {level1} reward')
+                if self.appear_then_click(self.I_OVERFLOW_CONFIRME, interval=0.8):
+                    pass
+                check_timer.reset()
+                continue
+
+            if self.appear(self.I_FP_GIFT_FLAG2) and self.appear_then_click(match_level[level2], interval=0.8):
+                logger.info(f'Select {level2} reward')
+                if self.appear_then_click(self.I_OVERFLOW_CONFIRME, interval=0.8):
+                    pass
                 check_timer.reset()
                 continue
 

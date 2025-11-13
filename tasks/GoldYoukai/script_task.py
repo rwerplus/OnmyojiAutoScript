@@ -44,32 +44,38 @@ class ScriptTask(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, SwitchSoul, 
             if con.buff_gold_100_click:
                 self.gold_100()
             self.close_buff()
-        self.ui_get_current_page()
-        self.ui_goto(page_team)
-        self.check_zones('金币妖怪')
-        # 开始
-        if not self.create_room():
-            self.gold_exit(con)
-        self.ensure_public()
-        self.create_ensure()
-        # 进入到了房间里面
-        wait_timer = Timer(60)
-        wait_timer.start()
-        while 1:
-            self.screenshot()
+        count = 0
+        while count < 2:
+            self.ui_get_current_page()
+            self.ui_goto(page_team)
+            self.check_zones('金币妖怪')
+            # 开始
+            if not self.create_room():
+                self.gold_exit(con)
+            self.ensure_public()
+            self.create_ensure()
+            # 进入到了房间里面
+            wait_timer = Timer(50)
+            wait_timer.start()
+            while 1:
+                self.screenshot()
 
-            if not self.is_in_room():
-                continue
-            if wait_timer.reached():
-                logger.warning('Wait for too long, exit')
-                self.exit_room()
-                break
-            if not self.appear(self.I_ADD_5_1):
-                # 有人进来了，可以进行挑战
-                logger.info('There is someone in the room and start the challenge')
-                self.click_fire()
-                self.run_general_battle()
-                break
+                if not self.is_in_room():
+                    continue
+                if wait_timer.reached():
+                    # 超过时间依然挑战
+                    logger.warning('Wait for too long and start the challenge')
+                    self.click_fire()
+                    count += 1
+                    self.run_general_battle()
+                    break
+                if not self.appear(self.I_ADD_5_1):
+                    # 有人进来了，可以进行挑战
+                    logger.info('There is someone in the room and start the challenge')
+                    self.click_fire()
+                    count += 1
+                    self.run_general_battle()
+                    break
         # 退出 (要么是在组队界面要么是在庭院)
         self.gold_exit(con)
 
@@ -82,6 +88,8 @@ class ScriptTask(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, SwitchSoul, 
         logger.info("Start battle process")
         while 1:
             self.screenshot()
+            if self.appear_then_click(self.I_PREPARE_HIGHLIGHT, interval=1):
+                logger.info('click prepare')
             if self.appear(self.I_DE_WIN):
                 logger.info('Win battle')
                 self.ui_click_until_disappear(self.I_DE_WIN)
@@ -114,6 +122,7 @@ class ScriptTask(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, SwitchSoul, 
 if __name__ == '__main__':
     from module.config.config import Config
     from module.device.device import Device
+
     c = Config('oas1')
     d = Device(c)
     t = ScriptTask(c, d)

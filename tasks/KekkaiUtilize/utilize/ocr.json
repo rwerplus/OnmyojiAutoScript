@@ -15,6 +15,15 @@
     "mode": "DigitCounter",
     "method": "Default",
     "keyword": "",
-    "description": "今日以领取经验"
+    "description": "今日已领取经验"
+  },
+  {
+    "itemName": "card_num",
+    "roiFront": "800,421,150,33",
+    "roiBack": "800,421,150,33",
+    "mode": "Single",
+    "method": "Default",
+    "keyword": "",
+    "description": "斗鱼或太古寄养数目"
   }
 ]

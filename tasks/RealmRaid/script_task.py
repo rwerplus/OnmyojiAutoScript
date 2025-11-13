@@ -184,13 +184,13 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
                 if con.raid_config.exit_four:
                     logger.info('Exit four enable')
                     self.fire(index)
-                    self.run_general_battle_back(con.general_battle_config)
+                    self.run_general_battle_back(con.general_battle_config, exit_four=True)
                     self.fire(index)
-                    self.run_general_battle_back(con.general_battle_config)
+                    self.run_general_battle_back(con.general_battle_config, exit_four=True)
                     self.fire(index)
-                    self.run_general_battle_back(con.general_battle_config)
+                    self.run_general_battle_back(con.general_battle_config, exit_four=True)
                     self.fire(index)
-                    self.run_general_battle_back(con.general_battle_config)
+                    self.run_general_battle_back(con.general_battle_config, exit_four=True)
             elif self.check_medal_is_frog(frog, medal, index):
                 # 如果挑战的这只是呱太的话，就要把锁定改为不锁定
                 con.general_battle_config.lock_team_enable = False
@@ -296,7 +296,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, RealmRaidAssets):
         cu, res, total = self.O_NUMBER.ocr(self.device.image)
 
         if total == 0:
-            self.reward_detect_click(False)
+            self.reward_detect_click(True)
             # 增加出现聊天框遮挡，处理奖励之后，重新识别票数
             cu, res, total = self.O_NUMBER.ocr(self.device.image)
         if cu == 0 and cu + res == total:
@@ -519,8 +519,5 @@ if __name__ == "__main__":
     device = Device(config)
     t = ScriptTask(config, device)
 
-    # t.run()
+    t.run()
 
-    print(t.find_one())
-    # target, order = t.find_one()
-    # print(t.check_medal_is_frog(True, target, order))

@@ -5,7 +5,7 @@
     "roiFront": "706,249,61,57",
     "roiBack": "200,120,951,298",
     "method": "Template matching",
-    "threshold": 0.8,
+    "threshold": 0.6,
     "description": "description"
   },
   {
@@ -74,8 +74,8 @@
   {
     "itemName": "check_duel",
     "imageName": "page_check_duel.png",
-    "roiFront": "1045,610,50,53",
-    "roiBack": "1018,579,100,100",
+    "roiFront": "110,10,64,38",
+    "roiBack": "79,1,110,74",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "description"
@@ -96,7 +96,16 @@
     "roiBack": "553,1,81,68",
     "method": "Template matching",
     "threshold": 0.7,
-    "description": "description"
+    "description": "检查狩猎战界面"
+  },
+  {
+    "itemName": "check_hunt_kirin",
+    "imageName": "page_check_hunt_kirin.png",
+    "roiFront": "353,240,30,54",
+    "roiBack": "328,234,81,68",
+    "method": "Template matching",
+    "threshold": 0.7,
+    "description": "检查狩猎战麒麟界面"
   },
   {
     "itemName": "check_hyakkisen",

@@ -133,6 +133,15 @@ class GeneralRoom(BaseTask, GeneralRoomAssets):
 
             if self.ocr_appear(self.O_GR_ZONES_NAME):
                 break
+            # https://github.com/runhey/OnmyojiAutoScript/issues/488
+            # 只能说朴实无华
+            text_ocr = self.O_GR_ZONES_NAME.ocr(self.device.image)
+            if name == '石距' and name in text_ocr:
+                break
+            if name == '金币妖怪' and "金币" in text_ocr:
+                break
+            if name == '经验妖怪' and '经验' in text_ocr:
+                break
             if click_timer.reached():
                 click_timer.reset()
                 self.device.click(x=pos[0] + randint(-5, 5), y=pos[1] + randint(-5, 5))

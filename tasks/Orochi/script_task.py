@@ -13,9 +13,10 @@ from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.GameUi.game_ui import GameUi
 from tasks.GameUi.page import page_main, page_soul_zones, page_shikigami_records
 from tasks.Orochi.assets import OrochiAssets
-from tasks.Orochi.config import Orochi, UserStatus
+from tasks.Orochi.config import Orochi, UserStatus, Layer
 from module.logger import logger
 from module.exception import TaskEnd
+
 
 class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi, SwitchSoul, OrochiAssets):
 
@@ -32,6 +33,8 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
             self.ui_goto(page_shikigami_records)
             self.run_switch_soul_by_name(self.config.orochi.switch_soul.group_name,
                                          self.config.orochi.switch_soul.team_name)
+        # 根据选层切换御魂
+        self.orochi_switch_soul()
 
         limit_count = self.config.orochi.orochi_config.limit_count
         limit_time = self.config.orochi.orochi_config.limit_time
@@ -68,8 +71,6 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
             self.set_next_run('Orochi', finish=False, success=False)
 
         raise TaskEnd
-
-
 
     def orochi_enter(self) -> bool:
         logger.info('Enter orochi')
@@ -129,6 +130,8 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
         self.orochi_enter()
         layer = self.config.orochi.orochi_config.layer
         self.check_layer(layer)
+        # https://github.com/runhey/OnmyojiAutoScript/issues/592
+        self.config.orochi.general_battle_config.lock_team_enable = True
         self.check_lock(self.config.orochi.general_battle_config.lock_team_enable)
         # 创建队伍
         logger.info('Create team')
@@ -471,6 +474,28 @@ class ScriptTask(GeneralBattle, GeneralInvite, GeneralBuff, GeneralRoom, GameUi,
             if random_click_swipt_enable:
                 self.random_click_swipt()
 
+    def orochi_switch_soul(self) -> None:
+        # 判断是否开启根据选层切换御魂
+        orochi_switch_soul = self.config.orochi.switch_soul
+        if not orochi_switch_soul.auto_switch_soul:
+            return
+
+        group_team: str = None
+        layer = self.config.orochi.orochi_config.layer
+        match layer:
+            case Layer.TEN:
+                group_team = orochi_switch_soul.ten_switch
+            case Layer.ELEVEN:
+                group_team = orochi_switch_soul.eleven_switch
+            case Layer.TWELVE:
+                group_team = orochi_switch_soul.twelve_switch
+            case Layer.THIRTEEN:
+                group_team = orochi_switch_soul.thirteen_switch
+
+        if orochi_switch_soul.auto_switch_soul:
+            self.ui_get_current_page()
+            self.ui_goto(page_shikigami_records)
+            self.run_switch_soul(group_team)
 
 
 if __name__ == '__main__':

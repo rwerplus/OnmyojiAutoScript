@@ -24,7 +24,7 @@ def switch_parser(switch_str: str) -> tuple:
 
 class SwitchSoul(BaseTask, SwitchSoulAssets):
 
-    def run_switch_soul(self, target: tuple or list[tuple]):
+    def run_switch_soul(self, target: tuple | list[tuple] | str):
         """
         保证在式神录的界面
         :return:
@@ -100,7 +100,7 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
                 break
             cur_text = ocr_text
             # 向上滑动
-            self.swipe(self.S_SS_GROUP_SWIPE_UP, 0.5)
+            self.swipe(self.S_SS_GROUP_SWIPE_UP, 1.5)
             # 等待滑动动画
             sleep(0.5)
 
@@ -129,12 +129,15 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
                 while 1:
                     self.click(self.I_SOU_SWITCH_SURE, 3)
                     self.screenshot()
+                    if self.appear_then_click(self.I_CHECK_BLOCK, 3):
+                        continue
                     if not self.appear(self.I_SOU_SWITCH_SURE):
                         break
                 continue
-            if not self.appear_then_click(target_team, interval=1):
+            if not self.appear_then_click(target_team, interval=3):
                 logger.warning(f'Click team {team} failed in group {group}')
-
+        # 兜底若还出现确认按钮则点击
+        self.ui_click_until_disappear(self.I_SOU_SWITCH_SURE)
         logger.info(f'Switch soul_one group {group} team {team}')
 
     def switch_souls(self, target: tuple or list[tuple]) -> None:
@@ -159,7 +162,7 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
             self.screenshot()
             if not self.appear(self.I_SOU_CHECK_IN):
                 break
-            if self.appear_then_click(self.I_RECORD_SOUL_BACK, interval=1):
+            if self.appear_then_click(self.I_RECORD_SOUL_BACK, interval=3.5):
                 continue
         logger.info('Exit shikigami records')
 
@@ -239,7 +242,7 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
             # 有则跳出检测
             if result and len(result) > 0:
                 break
-            self.swipe(self.S_SS_TEAM_SWIPE_UP)
+            self.swipe(self.S_SS_TEAM_SWIPE_UP, 0.3)
         logger.info('Swipe up to find target team')
 
         # 选中分组
@@ -250,14 +253,17 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
                 break
         logger.info(f'Select team {teamName}')
         # 切换御魂
-        for i in range(5):
-            sleep(0.8)
+        cnt_click: int = 0
+        self.O_SS_TEAM_NAME.keyword = teamName
+        while 1:
             self.screenshot()
-            self.O_SS_TEAM_NAME.keyword = teamName
-            if self.ocr_appear_click_by_rule(self.O_SS_TEAM_NAME, self.I_SOU_CLICK_PRESENT, interval=1):
-                continue
-            if self.appear_then_click(self.I_SOU_SWITCH_SURE, interval=1):
+            if cnt_click >= 4:
                 break
+            if self.appear_then_click(self.I_SOU_SWITCH_SURE, interval=0.8):
+                continue
+            if self.ocr_appear_click_by_rule(self.O_SS_TEAM_NAME, self.I_SOU_CLICK_PRESENT, interval=1.5):
+                cnt_click += 1
+                continue
         logger.info(f'Switch soul_one group {groupName} team {teamName}')
 
     def ocr_appear_click_by_rule(self,
@@ -279,7 +285,7 @@ class SwitchSoul(BaseTask, SwitchSoulAssets):
             return False
 
         x1, y1, w1, h1 = target.area
-        x, y, w, h = action.roi_back
+        x, y = action.coord()
 
         self.device.click(x=x, y=y1, control_name=target.name)
         return True

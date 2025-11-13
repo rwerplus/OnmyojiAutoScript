@@ -26,9 +26,6 @@ from module.exception import RequestHumanTakeover, ScriptError
 from module.logger import logger
 
 
-
-
-
 class Function:
     def __init__(self, key: str, data: dict):
         """
@@ -106,6 +103,7 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         super(ConfigWatcher, self).__init__()
         super(ConfigMenu, self).__init__()
         self.model = ConfigModel(config_name=config_name)
+        self.scheduler_update_dt = None  # 调度器更新时间
 
     def __getattr__(self, name):
         """
@@ -124,6 +122,13 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
     @cached_property
     def lock_config(self) -> Lock:
         return Lock()
+
+    @cached_property
+    def notifier(self):
+        notifier = Notifier(self.model.script.error.notify_config, enable=self.model.script.error.notify_enable)
+        notifier.config_name = self.config_name.upper()
+        logger.info(f'Notifier: {notifier.config_name}')
+        return notifier
 
     def gui_args(self, task: str) -> str:
         """
@@ -177,14 +182,14 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         pending_task = []
         waiting_task = []
         error = []
-        now = datetime.now()
+        self.scheduler_update_dt = datetime.now()
         for key, value in self.model.dict().items():
             func = Function(key, value)
             if not func.enable:
                 continue
             if not isinstance(func.next_run, datetime):
                 error.append(func)
-            elif func.next_run < now:
+            elif func.next_run < self.scheduler_update_dt:
                 pending_task.append(func)
             else:
                 waiting_task.append(func)
@@ -194,6 +199,13 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         if pending_task:
             pending_task = TaskScheduler.schedule(rule=self.model.script.optimization.schedule_rule,
                                                   pending=pending_task)
+            # 防止正在运行的任务被新上来的pending队列中的任务给顶替掉
+            if self.model.running_task and pending_task:
+                for i, obj in enumerate(pending_task):
+                    if obj.command == self.model.running_task:
+                        pending_task.insert(0, pending_task.pop(i))
+                        logger.info(f'{self.model.running_task} is running')
+                        break
         if waiting_task:
             # waiting_task = f.apply(waiting_task)
             waiting_task = sorted(waiting_task, key=operator.attrgetter("next_run"))
@@ -234,8 +246,10 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         获取调度器的数据， 但是你必须使用update_scheduler来更新信息
         :return:
         """
+        # 根据调度器更新时间来判断是否有可运行的任务,保证逻辑一致性
+        scheduler_update_dt = getattr(self, 'scheduler_update_dt', datetime.now())
         running = {}
-        if self.task is not None and self.task.next_run < datetime.now():
+        if self.task is not None and self.task.next_run < scheduler_update_dt:
             running = {"name": self.task.command, "next_run": str(self.task.next_run)}
 
         pending = []
@@ -251,8 +265,7 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         data = {"running": running, "pending": pending, "waiting": waiting}
         return data
 
-
-    def task_call(self, task: str=None, force_call=True):
+    def task_call(self, task: str = None, force_call=True):
         """
         回调任务，这会是在任务结束后调用
         :param task: 调用的任务的大写名称
@@ -277,7 +290,7 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
             return False
 
     def task_delay(self, task: str, start_time: datetime = None,
-                   success: bool=None, server: bool=True, target: datetime=None) -> None:
+                   success: bool = None, server: bool = True, target: datetime = None) -> None:
         """
         设置下次运行时间  当然这个也是可以重写的
         :param target: 可以自定义的下次运行时间
@@ -287,11 +300,6 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         :param finish: 是完成任务后的时间为基准还是开始任务的时间为基准
         :return:
         """
-        # 获取真蛇成功次数
-        global current_success, true_orochi_config
-        if task == 'TrueOrochi':
-            current_success = self.model.true_orochi.true_orochi_config.current_success
-
         # 加载配置文件
         self.reload()
         # 任务预处理
@@ -342,16 +350,16 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         next_run = run
 
         if server and hasattr(scheduler, 'server_update'):
-            # 加入随机浮动时间
+            # 加入随机延迟时间
             float_seconds = (scheduler.float_time.hour * 3600 +
                              scheduler.float_time.minute * 60 +
                              scheduler.float_time.second)
-            random_float = random.randint(-float_seconds, float_seconds)
+            random_float = random.randint(0, float_seconds)
             # 如果有强制运行时间
             if scheduler.server_update == time(hour=9):
                 next_run += timedelta(seconds=random_float)
             else:
-                next_run = parse_tomorrow_server(scheduler.server_update, random_float)
+                next_run = parse_tomorrow_server(scheduler.server_update, scheduler.delay_date, random_float)
 
         # 将这些连接起来，方便日志输出
         kv = dict_to_kv(
@@ -368,9 +376,6 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         self.lock_config.acquire()
         try:
             scheduler.next_run = next_run
-            if task == 'true_orochi':
-                true_orochi_config = getattr(task_object, 'true_orochi_config', None)
-                true_orochi_config.current_success = current_success
             self.save()
         finally:
             self.lock_config.release()
@@ -378,20 +383,8 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         logger.attr(f'{task}.scheduler.next_run', next_run)
 
 
-    @cached_property
-    def notifier(self):
-        notifier = Notifier(self.model.script.error.notify_config, enable=self.model.script.error.notify_enable)
-        notifier.config_name = self.config_name.upper()
-        logger.info(f'Notifier: {notifier.config_name}')
-        return notifier
-
 if __name__ == '__main__':
     config = Config(config_name='oas1')
-    config.update_scheduler()
-    print(config.waiting_task)
+    config.notifier.push(title="0000", content="dddddddd")
 
     # print(config.get_next())
-
-
-
-

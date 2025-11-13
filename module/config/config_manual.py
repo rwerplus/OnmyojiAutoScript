@@ -8,17 +8,18 @@ class ConfigManual:
     """
 
     SCHEDULER_PRIORITY = """
-        Restart
+        Restart > SoulsTidy
         > KekkaiUtilize > KekkaiActivation > DemonEncounter
         > AreaBoss > GoldYoukai > ExperienceYoukai > Nian > Tako > RealmRaid > RyouToppa > DailyTrifles > Exploration
-        > Dokan > Hunt 
+        > Dokan > AbyssShadows > Hunt > GuildBanquet > DemonRetreat
         > Orochi > OrochiMoans > OrochiJudgement > Sougenbi > FallenSun > EternitySea > SixRealms
         > ActivityShikigami > WantedQuests
-        > BondlingFairyland > EvoZone > GoryouRealm
+        > BondlingFairyland > EvoZone > GoryouRealm > HeroTest
+        > CollectiveMissionsr
+        > Pets > TalismanPass > Delegation > Hyakkiyakou
+        > Secret > WeeklyTrifles > MysteryShop > Duel 
         > TrueOrochi > RichMan
-        > CollectiveMissions
-        > Pets > TalismanPass > SoulsTidy > Delegation > Hyakkiyakou
-        > Secret > WeeklyTrifles > MysteryShop > Duel > MetaDemon > FrogBoss > FloatParade > Quiz
+        > MetaDemon > FrogBoss > FloatParade > Quiz > KittyShop > DyeTrials > MemoryScrolls
         """
 
     DEVICE_OVER_HTTP = False
@@ -36,5 +37,3 @@ class ConfigManual:
     MINITOUCH_FILEPATH_REMOTE = '/data/local/tmp/minitouch'
 
     HERMIT_FILEPATH_LOCAL = './bin/hermit/hermit.apk'
-
-

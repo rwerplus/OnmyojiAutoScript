@@ -7,10 +7,11 @@ from fastapi.responses import StreamingResponse
 from fastapi import WebSocket, WebSocketDisconnect
 from datetime import datetime
 from module.config.config import Config
+from module.config.utils import convert_to_underscore
 
 from module.logger import logger
 from module.server.main_manager import MainManager
-from module.server.script_process import ScriptProcess
+from module.server.script_process import ScriptProcess, ScriptState
 
 from tasks.Component.config_base import TimeDelta
 
@@ -42,6 +43,63 @@ async def config_new_name():
 @script_app.get('/config_all')
 async def config_all():
     return mm.all_json_file()
+
+
+@script_app.put('/config')
+async def config_rename(old_name: str = '', new_name: str = ''):
+    """
+    update config name
+    :param old_name: old config name
+    :param new_name: new config name
+    :return: True or False
+    """
+    if old_name == new_name or new_name == '':
+        return False
+    if old_name in mm.script_process:
+        if mm.script_process[old_name].state != ScriptState.INACTIVE:
+            mm.script_process[old_name].stop()
+        del mm.script_process[old_name]
+    if not mm.rename(old_name, new_name):
+        raise HTTPException(status_code=400, detail='Rename failed')
+    return True
+
+
+@script_app.delete('/config')
+async def config_delete(name: str = ''):
+    """
+    delete config file
+    :param name: config name
+    :return: True or False
+    """
+    if name == '' or name == 'template':
+        raise HTTPException(status_code=400, detail='Delete failed')
+    if name in mm.script_process:
+        if mm.script_process[name].state != ScriptState.INACTIVE:
+            mm.script_process[name].stop()
+        del mm.script_process[name]
+    if not mm.delete(name):
+        raise HTTPException(status_code=400, detail='Delete failed')
+    return True
+
+
+@script_app.put('/config/task/copy')
+async def task_copy(task_name: str, dest_config_name: str, source_config_name: str):
+    if dest_config_name not in mm.script_process or source_config_name not in mm.script_process:
+        return False
+    source_task = getattr(mm.config_cache(source_config_name).model, convert_to_underscore(task_name), None)
+    if source_task is None:
+        return False
+    return mm.config_cache(dest_config_name).model.copy_script_task(task_name, source_task)
+
+
+@script_app.put('/config/task/group/copy')
+async def task_group_copy(task_name: str, group_name: str, dest_config_name: str, source_config_name: str):
+    if dest_config_name not in mm.script_process or source_config_name not in mm.script_process:
+        return False
+    source_task = getattr(mm.config_cache(source_config_name).model, convert_to_underscore(task_name), None)
+    if source_task is None:
+        return False
+    return mm.config_cache(dest_config_name).model.copy_task_group(task_name, group_name, source_task)
 
 
 # ---------------------------------   脚本实例管理   ----------------------------------
@@ -96,6 +154,20 @@ async def script_task(script_name: str, task: str, group: str, argument: str, ty
         # 类型不正确
         raise HTTPException(status_code=400, detail=f'Argument type error: {e}')
     return mm.config_cache(script_name).model.script_set_arg(task, group, argument, value)
+
+
+@script_app.put('/{script_name}/{task}/sync_next_run')
+async def sync_next_run(script_name: str, task: str, target_dt: str):
+    if script_name not in mm.script_process:
+        return False
+    config = mm.config_cache(script_name)
+    target = datetime.strptime(target_dt, '%Y-%m-%d %H:%M:%S') if target_dt else None
+    config.task_delay(task=task, success=True, target=target)
+    script_process = mm.script_process[script_name]
+    config.get_next()
+    await script_process.broadcast_state({"schedule": config.get_schedule_data()})
+    return True
+
 
 # --------------------------------------  SSE  --------------------------------------
 @script_app.get('/{script_name}/state')
@@ -158,11 +230,4 @@ async def websocket_endpoint(websocket: WebSocket, script_name: str):
 
     except WebSocketDisconnect:
         logger.warning(f'[{script_name}] websocket disconnect')
-        script_process.disconnect(websocket)
-
-
-
-
-
-
-
+        await script_process.disconnect(websocket)

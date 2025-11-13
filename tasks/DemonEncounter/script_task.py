@@ -2,6 +2,7 @@
 # @author runhey
 # github https://github.com/runhey
 import time
+from time import sleep
 
 from enum import Enum
 from cached_property import cached_property
@@ -11,12 +12,14 @@ from module.logger import logger
 from module.exception import TaskEnd
 from module.base.timer import Timer
 
+from tasks.Component.SwitchSoul.switch_soul import SwitchSoul
 from tasks.GameUi.game_ui import GameUi
-from tasks.GameUi.page import page_main, page_demon_encounter
+from tasks.GameUi.page import page_demon_encounter, page_shikigami_records
 from tasks.DemonEncounter.assets import DemonEncounterAssets
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle
 from tasks.Component.GeneralBattle.config_general_battle import GeneralBattleConfig
 from tasks.DemonEncounter.data.answer import Answer
+
 
 class LanternClass(Enum):
     BATTLE = 0  # 打怪  --> 无法判断因为怪的图片不一样，用排除法
@@ -25,15 +28,23 @@ class LanternClass(Enum):
     REALM = 3  # 打结界
     EMPTY = 4  # 空
     MYSTERY = 5  # 神秘任务
+    BOSS = 6  # 大鬼王
 
 
-class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
+class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets, SwitchSoul):
+    best_boss_enable = False
 
     def run(self):
         if not self.check_time():
             logger.warning('Time is not right')
             raise TaskEnd('DemonEncounter')
         self.ui_get_current_page()
+        # 切换御魂
+        soul_config = self.config.demon_encounter.demon_soul_config
+        best_soul_config = self.config.demon_encounter.best_demon_soul_config
+        if soul_config.enable or best_soul_config.enable:
+            self.ui_goto(page_shikigami_records)
+            self.checkout_soul()
         self.ui_goto(page_demon_encounter)
         self.execute_lantern()
         self.execute_boss()
@@ -41,6 +52,79 @@ class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
         self.set_next_run(task='DemonEncounter', success=True, finish=False)
         raise TaskEnd('DemonEncounter')
 
+    def init_best_boss_enable(self):
+        today = datetime.now().weekday()
+        if today == 0:
+            # 鬼灵歌姬
+            self.best_boss_enable = self.config.model.demon_encounter.best_demon_boss_config.best_demon_kiryou_select
+        elif today == 1:
+            # 蜃气楼
+            self.best_boss_enable = self.config.model.demon_encounter.best_demon_boss_config.best_demon_shinkirou_select
+        elif today == 2:
+            # 土蜘蛛
+            self.best_boss_enable = self.config.model.demon_encounter.best_demon_boss_config.best_demon_tsuchigumo_select
+        elif today == 3:
+            # 荒骷髅
+            self.best_boss_enable = self.config.model.demon_encounter.best_demon_boss_config.best_demon_gashadokuro_select
+        elif today == 4:
+            # 地震鲶
+            self.best_boss_enable = self.config.model.demon_encounter.best_demon_boss_config.best_demon_namazu_select
+
+    def checkout_soul(self):
+        """
+        切换御魂
+        """
+        # 判断今天是周几
+        today = datetime.now().weekday()
+
+        # 普通逢魔御魂
+        soul_config = self.config.demon_encounter.demon_soul_config
+        # 极逢魔御魂
+        best_soul_config = self.config.demon_encounter.best_demon_soul_config
+
+        # 极逢魔选择
+        best_demon_boss_config = self.config.demon_encounter.best_demon_boss_config
+
+        group, team = None, None
+        if today == 0:
+            # 获取group,team
+            if best_soul_config.enable and best_demon_boss_config.best_demon_kiryou_select:
+                group, team = best_soul_config.best_demon_kiryou_utahime.split(",")
+            else:
+                group, team = soul_config.demon_kiryou_utahime.split(",")
+        elif today == 1:
+            if best_soul_config.enable and best_demon_boss_config.best_demon_shinkirou_select:
+                group, team = best_soul_config.best_demon_shinkirou.split(",")
+            else:
+                group, team = soul_config.demon_shinkirou.split(",")
+        elif today == 2:
+            if best_soul_config.enable and best_demon_boss_config.best_demon_tsuchigumo_select:
+                group, team = best_soul_config.best_demon_tsuchigumo.split(",")
+            else:
+                group, team = soul_config.demon_tsuchigumo.split(",")
+        elif today == 3:
+            if best_soul_config.enable and best_demon_boss_config.best_demon_gashadokuro_select:
+                group, team = best_soul_config.best_demon_gashadokuro.split(",")
+            else:
+                group, team = soul_config.demon_gashadokuro.split(",")
+        elif today == 4:
+            if best_soul_config.enable and best_demon_boss_config.best_demon_namazu_select:
+                group, team = best_soul_config.best_demon_namazu.split(",")
+            else:
+                group, team = soul_config.demon_namazu.split(",")
+        elif today == 5:
+            group, team = soul_config.demon_oboroguruma.split(",")
+        elif today == 6:
+            group, team = soul_config.demon_nightly_aramitama.split(",")
+        if group and team:
+            self.run_switch_soul_by_name(group, team)
+        if today == 0:
+            # 获取group,team
+            if best_soul_config.enable and best_demon_boss_config.best_demon_kiryou_select:
+                group, team = best_soul_config.best_demon_kiryou_utahime_supplementary.split(",")
+            else:
+                group, team = soul_config.demon_kiryou_utahime_supplementary.split(",")
+            self.run_switch_soul_by_name(group, team)
 
     def execute_boss(self):
         """
@@ -48,68 +132,133 @@ class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
         :return:
         """
         logger.hr('Start boss battle', 1)
-        while 1:
-            self.screenshot()
-            if self.appear(self.I_BOSS_FIRE):
-                current, remain, total = self.O_DE_BOSS_PEOPLE.ocr(self.device.image)
-                if total == 300 and current >= 290:
-                    logger.info('Boss battle people is full')
-                    if not self.appear(self.I_UI_BACK_RED):
-                        logger.warning('Boss battle people is full but no red back')
-                        continue
-                    self.ui_click_until_disappear(self.I_UI_BACK_RED)
-                    # 退出重新选一个没人慢的boss
-                    logger.info('Exit and reselect')
-                    continue
-                else:
-                    logger.info('Boss battle people is not full')
-                    break
+        self.init_best_boss_enable()
 
-            if self.appear_then_click(self.I_BOSS_NAMAZU, interval=1):
-                continue
-            if self.appear_then_click(self.I_BOSS_SHINKIRO, interval=1):
-                continue
-            if self.appear_then_click(self.I_BOSS_ODOKURO, interval=1):
-                continue
-            if self.appear_then_click(self.I_BOSS_OBOROGURUMA, interval=1):
-                continue
-            if self.appear_then_click(self.I_BOSS_TSUCHIGUMO, interval=1):
-                continue
-            if self.appear_then_click(self.I_BOSS_SONGSTRESS, interval=1):
-                continue
-            if self.appear_then_click(self.I_DE_BOSS, interval=4):
-                continue
-            if self.click(self.C_DM_BOSS_CLICK, interval=1.7):
-                continue
-        logger.info('Boss battle start')
-        # 点击集结挑战
-        boss_fire_count = 0  # 五次没点到就意味着今天已经挑战过了
-        while 1:
-            self.screenshot()
-            if self.appear(self.I_BOSS_CONFIRM):
-                self.ui_click(self.I_BOSS_NO_SELECT, self.I_BOSS_SELECTED)
-                self.ui_click(self.I_BOSS_CONFIRM, self.I_BOSS_GATHER)
-                break
-            if self.appear(self.I_BOSS_GATHER):
-                break
-            if boss_fire_count >= 5:
-                logger.warning('Boss battle already done')
-                self.ui_click_until_disappear(self.I_UI_BACK_RED)
+        def find_boss():
+            find_btn_clicked = False
+            timer_find_boss = Timer(10 * 60)
+            timer_find_boss.start()
+            while 1:
+                self.screenshot()
+                if self.appear(self.I_BOSS_FIRE) or self.appear(self.I_BEST_BOSS_FIRE):
+                    break
+                if timer_find_boss.reached():
+                    logger.warning('find boss timeout')
+                    self.set_next_run(task='DemonEncounter', success=False, finish=True, server=False)
+                    raise TaskEnd('DemonEncounter')
+                if self.appear(self.I_JADE_50):
+                    # 没找到boss但地图中央出现宝箱，导致点击宝箱出现50勾玉购买界面
+                    self.ui_click_until_smt_disappear(self.I_DE_FIND, self.I_JADE_50, interval=1)
+                    continue
+                # if self.appear_then_click(self.I_BOSS_NAMAZU, interval=1):
+                #     continue
+                # if self.appear_then_click(self.I_BOSS_SHINKIRO, interval=1):
+                #     continue
+                # if self.appear_then_click(self.I_BOSS_ODOKURO, interval=1):
+                #     continue
+                # if self.appear_then_click(self.I_BOSS_OBOROGURUMA, interval=1):
+                #     continue
+                # if self.appear_then_click(self.I_BOSS_TSUCHIGUMO, interval=1):
+                #     continue
+                # if self.appear_then_click(self.I_BOSS_SONGSTRESS, interval=1):
+                #     continue
+                if find_btn_clicked and self.click(self.C_DM_BOSS_CLICK, interval=5):
+                    find_btn_clicked = False
+                    continue
+                if self.best_boss_enable:
+                    self.device.click_record_clear()
+                    if self.appear(self.I_DE_BOSS_BEST) and (not find_btn_clicked):
+                        self.device.click_record_remove(self.I_DE_BOSS_BEST)
+                        if self.click(self.I_DE_BOSS_BEST, interval=4):
+                            logger.info("Finding best boss...")
+                            find_btn_clicked = True
+                        continue
+                else:
+                    if self.appear(self.I_DE_BOSS) and (not find_btn_clicked):
+                        self.device.click_record_remove(self.I_DE_BOSS)
+                        if self.click(self.I_DE_BOSS, interval=4):
+                            logger.info("Finding normal boss...")
+                            find_btn_clicked = True
+                        continue
+            return True
+
+        def enter_boss():
+            logger.info('trying to enter boss...')
+            # 点击集结挑战
+            boss_fire_count = 0  # 五次没点到就意味着今天已经挑战过了
+            ocr_people_item = self.O_DE_BEST_BOSS_PEOPLE if self.best_boss_enable else self.O_DE_BOSS_PEOPLE
+            while 1:
+                self.screenshot()
+
+                if self.appear(self.I_BOSS_FIRE) or self.appear(self.I_BEST_BOSS_FIRE):
+                    current, remain, total = ocr_people_item.ocr(self.device.image)
+                    if total == 300 and current >= 290:
+                        logger.info('Boss battle people is full')
+                        if not self.appear(self.I_UI_BACK_RED):
+                            logger.warning('Boss battle people is full but no red back')
+                            continue
+                        self.ui_click_until_disappear(self.I_UI_BACK_RED)
+                        # 退出重新选一个没人慢的boss
+                        logger.info('Exit and reselect')
+                        return False
+
+                logger.info('Boss battle people is not full')
+
+                if self.appear(self.I_BOSS_CONFIRM):
+                    self.ui_click(self.I_BOSS_NO_SELECT, self.I_BOSS_SELECTED)
+                    self.ui_click(self.I_BOSS_CONFIRM, self.I_BOSS_GATHER)
+                    break
+                if self.appear(self.I_BOSS_GATHER):
+                    break
+                if boss_fire_count >= 5:
+                    logger.warning('Boss battle already done')
+                    self.set_next_run(task='DemonEncounter', success=False, finish=True, server=True)
+                    self.ui_click_until_disappear(self.I_UI_BACK_RED)
+                    raise TaskEnd('DemonEncounter')
+
+                if (self.appear_then_click(self.I_BOSS_FIRE, interval=3)
+                        or self.appear_then_click(self.I_BEST_BOSS_FIRE, interval=3)):
+                    boss_fire_count += 1
+                    continue
+            return True
+
+        fail_count = 0
+        while True:
+            if fail_count >= 5:
                 return
-            if self.appear_then_click(self.I_BOSS_FIRE, interval=3):
-                boss_fire_count += 1
+            if not find_boss():
                 continue
+            if enter_boss():
+                break
+            fail_count += 1
+
         logger.info('Boss battle confirm and enter')
         # 等待挑战, 5秒也是等
         time.sleep(5)
-        self.device.stuck_record_add('BATTLE_STATUS_S')
-        self.wait_until_disappear(self.I_BOSS_GATHER)
-        self.device.stuck_record_clear()
-        self.device.stuck_record_add('BATTLE_STATUS_S')
         # 延长时间并在战斗结束后改回来
         self.device.stuck_timer_long = Timer(480, count=480).start()
+        #
         config = self.con
-        self.run_general_battle(config)
+        while True:
+            self.screenshot()
+            if self.appear(self.I_BOSS_DONE_CHECK):
+                break
+            if self.appear(self.I_BOSS_GATHER):
+                self.device.stuck_record_clear()
+                self.device.stuck_record_add('BATTLE_STATUS_S')
+                logger.info('Boss Gathering...')
+                sleep(2)
+                continue
+            if self.appear(self.I_BOSS_WAIT):
+                logger.info('Boss battle failed, waiting for 2 seconds...')
+                sleep(2)
+                continue
+            if self.appear(self.I_PREPARE_HIGHLIGHT):
+                self.run_general_battle(config)
+                continue
+            logger.info('Unknown scene Or Boss fight failed.waiting for Prepare_Button appear...')
+            self.wait_until_appear(self.I_PREPARE_HIGHLIGHT, wait_time=2)
+
         self.device.stuck_timer_long = Timer(300, count=300).start()
 
         # 等待回到挑战boss主界面
@@ -165,7 +314,7 @@ class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
             lantern_type = self.check_lantern(i)
             match lantern_type:
                 case LanternClass.BOX:
-                    self._box()
+                    self._box(match_click[i])
                 case LanternClass.MAIL:
                     self._mail(match_click[i])
                 case LanternClass.REALM:
@@ -176,13 +325,15 @@ class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
                     self._battle(match_click[i])
                 case LanternClass.MYSTERY:
                     self._mystery(match_click[i])
+                case LanternClass.BOSS:
+                    self._boss(match_click[i])
             time.sleep(1)
 
     @cached_property
     def con(self) -> GeneralBattleConfig:
         return GeneralBattleConfig()
 
-    def check_lantern(self, index: int=1):
+    def check_lantern(self, index: int = 1):
         """
         检查灯笼的类型
         :param index: 四个灯笼，从1开始
@@ -204,10 +355,12 @@ class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
         self.I_DE_LETTER.roi_back = match_roi[index]
         self.I_DE_MYSTERY.roi_back = match_roi[index]
         self.I_DE_REALM.roi_back = match_roi[index]
+        self.I_DE_FIND_BOSS.roi_back = match_roi[index]
         target_box = self.I_DE_BOX
         target_letter = self.I_DE_LETTER
         target_mystery = self.I_DE_MYSTERY
         target_realm = self.I_DE_REALM
+        target_find_boss = self.I_DE_FIND_BOSS
         target_empty = match_empty[index]
 
         # 开始判断
@@ -227,17 +380,41 @@ class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
         elif self.appear(target_empty):
             logger.info(f'Lantern {index} is empty')
             return LanternClass.EMPTY
+        elif self.appear(target_find_boss):
+            logger.info(f'Lantern {index} is boss')
+            return LanternClass.BOSS
         else:
             # 无法判断是否是战斗的还是结界的
             logger.info(f'Lantern {index} is battle')
             return LanternClass.BATTLE
 
-    def _box(self):
-        # 宝箱不领
-        pass
+    def _box(self, target_click):
+        box_buy_config = self.config.demon_encounter.box_buy_config
+        while 1:
+            self.screenshot()
+            if self.appear(self.I_JADE_50):
+                break
+            if self.click(target_click, interval=1):
+                continue
+        while 1:
+            self.screenshot()
+            if not self.appear(self.I_MYSTERY_AMULET) and not (box_buy_config.box_buy_sushi and self.appear(self.I_SUSHI)):
+                if self.appear_then_click(self.I_DE_FIND, interval=2.5):
+                    break
+            # 默认购买蓝票
+            if self.appear(self.I_MYSTERY_AMULET):
+                logger.info('Buy a mystery amulet for 50 jade')
+                self.click(self.I_JADE_50)
+                continue
+            # 可选购买体力
+            if box_buy_config.box_buy_sushi and self.appear(self.I_SUSHI):
+                logger.info('Buy one hundred sushi for 50 jade')
+                self.click(self.I_JADE_50)
+                continue
+            
 
     def _mail(self, target_click):
-        # 答题，还没有碰到过答题的
+        # 答题
         def answer():
             click_match = {
                 1: self.C_ANSWER_1,
@@ -271,7 +448,7 @@ class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
             if self.click(target_click, interval=1):
                 continue
         logger.info('Question answering Start')
-        for i in range(1,4):
+        for i in range(1, 4):
             # 还未测试题库无法识别的情况
             logger.hr(f'Answer {i}', 3)
             answer_click = answer()
@@ -292,16 +469,14 @@ class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
                     break
                 # 如果没有出现红色关闭按钮，说明答题结束
                 if not self.appear(self.I_LETTER_CLOSE):
-                    time.sleep(0.5)
+                    time.sleep(1.8)
                     self.screenshot()
-                    if self.appear(self.I_LETTER_CLOSE):
-                        continue
-                    else:
+                    if not self.appear(self.I_LETTER_CLOSE):
                         logger.warning('Answer finish')
                         return
 
                 # 一直点击
-                self.click(answer_click, interval=1)
+                self.click(answer_click, interval=1.5)
             time.sleep(0.5)
 
     def _battle(self, target_click):
@@ -347,6 +522,21 @@ class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
         # 神秘任务， 不做
         pass
 
+    def _boss(self, target_click):
+        # 运气爆表，点灯笼出现大鬼王
+        while 1:
+            self.screenshot()
+            if self.appear(self.I_BOSS_KILLED):
+                # 这个大鬼王已经击败
+                logger.warning('Boss already killed')
+                self.ui_click_until_disappear(self.I_UI_BACK_RED)
+                break
+            if self.appear(self.I_BOSS_FIRE):
+                self.execute_boss()
+                break
+            if self.click(target_click, interval=2.3):
+                continue
+
     def check_time(self):
         """
         检查时间是否正确，
@@ -361,9 +551,9 @@ class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
             target_time = datetime(now.year, now.month, now.day, 17, 30, 0)
             self.set_next_run(task='DemonEncounter', success=False, finish=False, target=target_time)
             return False
-        elif now.hour >= 22:
-            # 22点之后，推迟到第二天的17:30
-            logger.info('After 22:00, wait to 17:30')
+        elif now.hour >= 23:
+            # 23点之后，推迟到第二天的17:30
+            logger.info('After 23:00, wait to 17:30')
             target_time = datetime(now.year, now.month, now.day, 17, 30, 0) + timedelta(days=1)
             self.set_next_run(task='DemonEncounter', success=False, finish=False, target=target_time)
             return False
@@ -405,13 +595,14 @@ class ScriptTask(GameUi, GeneralBattle, DemonEncounterAssets):
                 logger.warning('Obtain battle timeout')
                 return True
 
+
 if __name__ == '__main__':
     from module.config.config import Config
     from module.device.device import Device
 
-    c = Config('oas1')
+    c = Config('du')
     d = Device(c)
     t = ScriptTask(c, d)
 
-    # t.run()
-    t.battle_wait(True)
+    t.run()
+    # t.battle_wait(True)

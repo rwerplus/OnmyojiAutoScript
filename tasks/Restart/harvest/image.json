@@ -47,8 +47,8 @@
   {
     "itemName": "harvest_mail_all",
     "imageName": "harvest_harvest_mail_all.png",
-    "roiFront": "80,622,75,64",
-    "roiBack": "80,622,75,64",
+    "roiFront": "69,589,64,57",
+    "roiBack": "28,572,115,123",
     "method": "Template matching",
     "threshold": 0.8,
     "description": "全部收取"
@@ -124,5 +124,122 @@
     "method": "Template matching",
     "threshold": 0.8,
     "description": "description"
+  },
+  {
+    "itemName": "harvest_soul_1",
+    "imageName": "harvest_harvest_soul_1.png",
+    "roiFront": "248,501,34,37",
+    "roiBack": "165,389,929,168",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "点击随机御魂"
+  },
+  {
+    "itemName": "harvest_soul_2",
+    "imageName": "harvest_harvest_soul_2.png",
+    "roiFront": "586,561,112,47",
+    "roiBack": "570,547,139,71",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "选择中间第二个御魂"
+  },
+  {
+    "itemName": "harvest_soul_3",
+    "imageName": "harvest_harvest_soul_3.png",
+    "roiFront": "313,489,188,33",
+    "roiBack": "302,472,216,60",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "六星御魂标志"
+  },
+  {
+    "itemName": "harvest_guild_reward",
+    "imageName": "harvest_harvest_guild_reward.png",
+    "roiFront": "244,498,41,42",
+    "roiBack": "200,403,817,157",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "寮包"
+  },
+  {
+    "itemName": "harvest_back_pet_house",
+    "imageName": "harvest_back_pet_house.png",
+    "roiFront": "20,15,70,70",
+    "roiBack": "20,15,70,70",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "宠物小屋关闭按钮"
+  },
+  {
+    "itemName": "harvest_zidu",
+    "imageName": "harvest_harvest_zidu.png",
+    "roiFront": "785,475,135,135",
+    "roiBack": "785,475,135,135",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "点击庭院阴阳师出现的姿度按钮"
+  },
+  {
+    "itemName": "harvest_mail_copy",
+    "imageName": "harvest_harvest_mail_copy.png",
+    "roiFront": "257,509,29,21",
+    "roiBack": "192,472,790,100",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "harvest_mail_2",
+    "imageName": "harvest_harvest_mail_2.png",
+    "roiFront": "156,125,65,60",
+    "roiBack": "120,94,290,536",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "description"
+  },
+  {
+    "itemName": "system_mail_open",
+    "imageName": "harvest_system_mail_open.png",
+    "roiFront": "1201,223,51,112",
+    "roiBack": "1197,219,59,118",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "系统邮件打开状态"
+  },
+  {
+    "itemName": "special_mail_close",
+    "imageName": "harvest_special_mail_close.png",
+    "roiFront": "1200,379,53,108",
+    "roiBack": "1185,342,80,178",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "特殊邮件关闭状态"
+  },
+  {
+    "itemName": "system_mail_close",
+    "imageName": "harvest_system_mail_close.png",
+    "roiFront": "1200,222,53,112",
+    "roiBack": "1186,193,81,156",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "系统邮件关闭状态"
+  },
+  {
+    "itemName": "special_mail_open",
+    "imageName": "harvest_special_mail_open.png",
+    "roiFront": "1201,380,55,110",
+    "roiBack": "1190,348,79,162",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "特殊邮件打开状态"
+  },
+  {
+    "itemName": "read_all_mail",
+    "imageName": "harvest_read_all_mail.png",
+    "roiFront": "155,603,166,44",
+    "roiBack": "149,588,182,72",
+    "method": "Template matching",
+    "threshold": 0.8,
+    "description": "一键已读所有邮件"
   }
 ]

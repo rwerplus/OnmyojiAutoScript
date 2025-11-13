@@ -9,8 +9,11 @@ from pathlib import Path
 
 from module.base.decorator import cached_property
 from module.logger import logger
+from module.base.utils import is_approx_rectangle
+
 
 class RuleImage:
+    debug_mode: bool = False
 
     def __init__(self, roi_front: tuple, roi_back: tuple, method: str, threshold: float, file: str) -> None:
         """
@@ -73,7 +76,7 @@ class RuleImage:
         if height != self.roi_front[3] or width != self.roi_front[2]:
             self.roi_front[2] = width
             self.roi_front[3] = height
-            logger.info(f"roi_front size changed to {width}x{height}")
+            logger.debug(f"{self.name} roi_front size changed to {width}x{height}")
 
     def load_kp_des(self) -> None:
         if self._kp is not None and self._des is not None:
@@ -143,19 +146,88 @@ class RuleImage:
             threshold = self.threshold
 
         if not self.is_template_match:
-            raise Exception(f"unknown method {self.method}")
+            return self.sift_match(image)
+            # raise Exception(f"unknown method {self.method}")
 
         source = self.corp(image)
         mat = self.image
+
+        if mat is None or mat.shape[0] == 0 or mat.shape[1] == 0:
+            logger.error(f"Template image is invalid: {mat.shape}") #检测模板尺寸，不合法则不进行匹配，避免两次截图画面完全相同造成模板不合法
+            return True  # 如果模板图像无效，直接返回 True
+
         res = cv2.matchTemplate(source, mat, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)  # 最小匹配度，最大匹配度，最小匹配度的坐标，最大匹配度的坐标
-        # logger.attr(self.name, max_val)
+        if self.debug_mode:
+            logger.attr(self.name, f'matching score {max_val:.5f}')
+
         if max_val > threshold:
             self.roi_front[0] = max_loc[0] + self.roi_back[0]
             self.roi_front[1] = max_loc[1] + self.roi_back[1]
             return True
         else:
             return False
+
+    def match_all(self, image: np.array, threshold: float = None, roi: list = None) -> list[tuple]:
+        """
+        区别于match，这个是返回所有的匹配结果
+        :param roi:
+        :param image:
+        :param threshold:
+        :return:
+        """
+        if roi is not None:
+            self.roi_back = roi
+        if threshold is None:
+            threshold = self.threshold
+        if not self.is_template_match:
+            raise Exception(f"unknown method {self.method}")
+        source = self.corp(image)
+        mat = self.image
+        results = cv2.matchTemplate(source, mat, cv2.TM_CCOEFF_NORMED)
+        locations = np.where(results >= threshold)
+        matches = []
+        for pt in zip(*locations[::-1]):  # (x, y) coordinates
+            score = results[pt[1], pt[0]]
+            # 得分, x, y, w, h
+            x = self.roi_back[0] + pt[0]
+            y = self.roi_back[1] + pt[1]
+            matches.append((score, x, y, mat.shape[1], mat.shape[0]))
+        return matches
+
+    def match_all_any(self, image: np.array, threshold: float = None, roi: list = None, nms_threshold: float = 0.3) -> list[tuple]:
+        """
+        区别于match，这个是返回所有的匹配结果，去除冗余匹配项（例如：多个框选区域重叠的情况）时使用。
+        :param roi:
+        :param image:
+        :param threshold:
+        :return:
+        """
+        if roi is not None:
+            self.roi_back = roi
+        if threshold is None:
+            threshold = self.threshold
+        if not self.is_template_match:
+            raise Exception(f"unknown method {self.method}")
+        source = self.corp(image)
+        mat = self.image
+        results = cv2.matchTemplate(source, mat, cv2.TM_CCOEFF_NORMED)
+        locations = np.where(results >= threshold)
+        matches = []
+        for pt in zip(*locations[::-1]):  # (x, y) coordinates
+            score = results[pt[1], pt[0]]
+            # 得分, x, y, w, h
+            x = self.roi_back[0] + pt[0]
+            y = self.roi_back[1] + pt[1]
+            matches.append((score, x, y, mat.shape[1], mat.shape[0]))
+        if len(matches) > 0:
+            scores = np.array([m[0] for m in matches])
+            boxes = np.array([[m[1], m[2], m[3], m[4]] for m in matches])
+            # 使用OpenCV的NMSBoxes
+            indices = cv2.dnn.NMSBoxes(boxes.tolist(), scores.tolist(), score_threshold=threshold, nms_threshold=nms_threshold)
+            filtered_matches = [matches[i] for i in indices]
+            return filtered_matches
+        return matches
 
     def coord(self) -> tuple:
         """
@@ -182,6 +254,7 @@ class RuleImage:
         return int(x + w//2), int(y + h//2)
 
     def test_match(self, image: np.array):
+        self.debug_mode = True
         if self.is_template_match:
             return self.match(image)
         if self.is_sift_flann:
@@ -215,7 +288,7 @@ class RuleImage:
             # 设定阈值, 距离小于对方的距离的0.7倍我们认为是好的匹配点.
             if m.distance < 0.6 * n.distance:
                 good.append(m)
-        if len(good) >= 4:
+        if len(good) >= 10:
             src_pts = float32([self.kp[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
             dst_pts = float32([kp[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
 
@@ -232,6 +305,8 @@ class RuleImage:
                 self.roi_front[1] = dst[0, 0, 1] + self.roi_back[1]
                 if show:
                     cv2.polylines(source, [dst], isClosed=True, color=(0, 0, 255), thickness=2)
+                if not is_approx_rectangle(np.array([pos[0] for pos in dst])):
+                    result = False
         else:
             result = False
 
@@ -251,6 +326,22 @@ class RuleImage:
             cv2.waitKey(0)
             cv2.destroyAllWindows()
         return result
+
+    def match_mean_color(self, image, color: tuple, bias=10) -> bool:
+        """
+
+        :param image:
+        :param color:  rgb
+        :param bias:
+        :return:
+        """
+        image = self.corp(image)
+        average_color = cv2.mean(image)
+        # logger.info(f'{self.name} average_color: {average_color}')
+        for i in range(3):
+            if abs(average_color[i] - color[i]) > bias:
+                return False
+        return True
 
 
 if __name__ == "__main__":
