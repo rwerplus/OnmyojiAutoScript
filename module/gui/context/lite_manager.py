@@ -8,16 +8,29 @@ but **does not** spawn a per-config ``ScriptProcess`` over zerorpc. Everything
 runs in-process against a single ``Device`` instance, which is what makes the
 Tools-only launcher fast.
 
+Two modes:
+
+- **Live mode** (default): a single ``Device`` is initialized lazily on first
+  screenshot. ``click`` / ``swipe`` / ``test_ocr`` go through ADB.
+- **Static-image mode** (``image_path`` set): no Device ever spins up;
+  ``gui_mirror_image`` returns a cached QImage of the supplied screenshot,
+  ``test_ocr`` / ``test_image_match`` run against the cached numpy array,
+  ``click`` / ``swipe`` are warning-logged no-ops. Useful for editing rules
+  offline against an existing screenshot.
+
 QML side touchpoints (do not break these):
 
 - ``process_manager.gui_menu()``                          -> tree menu JSON
 - ``process_manager.add(configName)``                     -> no-op
-- ``process_manager.gui_mirror_image(scriptName)``        -> live screenshot QImage
+- ``process_manager.gui_mirror_image(scriptName)``        -> QImage (live or cached)
 - ``process_manager.gui_args / gui_task / gui_set_task*`` -> stubs (Tools panel
   never reaches the Args.qml branch in our window, but the methods exist so
   any stray QML binding does not raise AttributeError)
+- ``process_manager.default_tool()``                      -> Chinese tool name
+- ``process_manager.is_static_mode()``                    -> bool
 
-Plus convenience slots so the tool editors can actually exercise the device:
+Plus convenience slots so the tool editors can actually exercise the device
+(or the static image, in static mode):
 
 - ``click(x, y)``, ``long_click(x, y, duration_ms)``
 - ``swipe(x1, y1, x2, y2, duration_ms)``
@@ -86,17 +99,88 @@ class LiteContext(QObject):
     sig_update_pending = Signal(str, str)
     sig_update_waiting = Signal(str, str)
 
-    def __init__(self, config_name: Optional[str] = None) -> None:
+    def __init__(self,
+                 config_name: Optional[str] = None,
+                 image_path: Optional[str] = None,
+                 default_tool: Optional[str] = None) -> None:
+        """
+        Args:
+            config_name: name under config/ (without .json) bound to Device.
+                Ignored when ``image_path`` is provided (no Device init).
+            image_path: optional path to a screenshot. When set, LiteContext
+                runs in **static mode**: ``gui_mirror_image`` returns the
+                cached image, ``test_ocr`` / ``test_image_match`` run against
+                that same image, and ``click`` / ``swipe`` are no-ops with a
+                warning. Device is never initialized — useful for editing
+                rules offline against an existing screenshot.
+            default_tool: which tool tab the QML window should land on
+                initially (Chinese label, e.g. '图像规则'). QML reads this
+                via the ``default_tool()`` slot.
+        """
         super().__init__()
         self._config_name = config_name or _pick_default_config_name()
         self._config = None
         self._device = None
         self._device_lock = threading.Lock()
-        logger.info(f'LiteContext bound to config "{self._config_name}"')
+        self._default_tool = default_tool or ''
+
+        # --- Static image cache -------------------------------------------
+        # In static mode we hold both a QImage (for QML's mirror viewer) and
+        # an RGB numpy array (so RuleOcr/RuleImage see the same format
+        # device.screenshot() would have returned — RGB, uint8, HxWx3).
+        self._static_mode = False
+        self._static_image_path: Optional[str] = None
+        self._static_image_qt: Optional[QImage] = None
+        self._static_image_rgb: Optional[np.ndarray] = None
+        if image_path:
+            self._load_static_image(image_path)
+
+        if self._static_mode:
+            logger.info(f'LiteContext: static mode, image="{self._static_image_path}"')
+        else:
+            logger.info(f'LiteContext bound to config "{self._config_name}"')
+
+    # ------------------------------------------------------------------
+    # Static image loading
+    # ------------------------------------------------------------------
+
+    def _load_static_image(self, path: str) -> None:
+        """Load ``path`` into both a QImage and an RGB numpy array.
+
+        Uses ``np.fromfile`` + ``cv2.imdecode`` to be safe with non-ASCII
+        paths on Windows (cv2.imread mishandles them). Falls back to a
+        minimal warning + non-static mode on failure rather than crashing
+        the launcher.
+        """
+        try:
+            abs_path = os.path.abspath(path)
+            if not os.path.exists(abs_path):
+                logger.error(f'Static image not found: {abs_path}')
+                return
+            buf = np.fromfile(abs_path, dtype=np.uint8)
+            bgr = cv2.imdecode(buf, cv2.IMREAD_COLOR)
+            if bgr is None:
+                logger.error(f'cv2 failed to decode {abs_path}')
+                return
+            rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+            h, w, _ = rgb.shape
+            qimg = QImage(rgb.tobytes(), w, h, w * 3, QImage.Format_RGB888).copy()
+        except Exception:
+            logger.exception(f'Failed to load static image {path!r}')
+            return
+
+        self._static_mode = True
+        self._static_image_path = abs_path
+        self._static_image_rgb = rgb
+        self._static_image_qt = qimg
 
     # ------------------------------------------------------------------
     # Device / Config (lazy)
     # ------------------------------------------------------------------
+
+    @property
+    def static_mode(self) -> bool:
+        return self._static_mode
 
     @property
     def config(self):
@@ -107,6 +191,11 @@ class LiteContext(QObject):
 
     @property
     def device(self):
+        if self._static_mode:
+            # Caller is responsible for checking static_mode first. Raising
+            # here makes accidental device use in static mode loud.
+            raise RuntimeError('LiteContext is in static-image mode; '
+                               'no Device is available')
         if self._device is None:
             with self._device_lock:
                 if self._device is None:
@@ -119,8 +208,10 @@ class LiteContext(QObject):
         """
         Force Device init up front. Call this from the entry script after the
         QML window appears so the very first screenshot tick does not stall
-        the UI thread for a couple of seconds.
+        the UI thread for a couple of seconds. No-op in static mode.
         """
+        if self._static_mode:
+            return
         try:
             _ = self.device
             self.device.screenshot()
@@ -144,11 +235,19 @@ class LiteContext(QObject):
     @Slot(str, result='QImage')
     def gui_mirror_image(self, _config: str) -> QImage:
         """
-        Capture a screenshot via ``Device`` and hand it to QML as a QImage.
+        Provide a screenshot to MirrorImage.qml.
 
-        The ``_config`` argument is ignored (LiteContext only owns one device).
-        QML invokes this on a Timer at ~1Hz from MirrorImage.qml.
+        - Static mode: return the cached QImage every tick. The QML Timer
+          keeps polling at 1Hz but each call is essentially a memcpy, so the
+          ROI editor stays responsive without ever talking to ADB.
+        - Live mode: capture via ``Device`` and convert to QImage.
         """
+        if self._static_mode:
+            if self._static_image_qt is None:
+                return QImage()
+            # Hand QML a copy so it cannot accidentally mutate our cache.
+            return QImage(self._static_image_qt)
+
         try:
             frame = self.device.screenshot()
         except Exception:
@@ -179,6 +278,19 @@ class LiteContext(QObject):
         except Exception:
             pass
         return qimg
+
+    @Slot(result='QString')
+    def default_tool(self) -> str:
+        """Optional default tool tab (Chinese label). Empty if not set."""
+        return self._default_tool
+
+    @Slot(result=bool)
+    def is_static_mode(self) -> bool:
+        return self._static_mode
+
+    @Slot(result='QString')
+    def static_image_path(self) -> str:
+        return self._static_image_path or ''
 
     # --- The methods below exist purely to satisfy QML bindings that the
     #     Tools panel never actually exercises. Returning empty strings/false
@@ -236,6 +348,9 @@ class LiteContext(QObject):
 
     @Slot(int, int)
     def click(self, x: int, y: int) -> None:
+        if self._static_mode:
+            logger.warning(f'click({x},{y}) ignored: static-image mode')
+            return
         try:
             self.device.click(int(x), int(y), control_check=False, control_name='ToolsClick')
         except Exception:
@@ -243,6 +358,9 @@ class LiteContext(QObject):
 
     @Slot(int, int, int)
     def long_click(self, x: int, y: int, duration_ms: int) -> None:
+        if self._static_mode:
+            logger.warning(f'long_click({x},{y}) ignored: static-image mode')
+            return
         try:
             seconds = max(0.05, float(duration_ms) / 1000.0)
             self.device.long_click(int(x), int(y), duration=(seconds, seconds + 0.1),
@@ -252,6 +370,9 @@ class LiteContext(QObject):
 
     @Slot(int, int, int, int, int)
     def swipe(self, x1: int, y1: int, x2: int, y2: int, duration_ms: int) -> None:
+        if self._static_mode:
+            logger.warning(f'swipe({x1},{y1}->{x2},{y2}) ignored: static-image mode')
+            return
         try:
             seconds = max(0.05, float(duration_ms) / 1000.0)
             self.device.swipe(p1=(int(x1), int(y1)), p2=(int(x2), int(y2)),
@@ -261,18 +382,32 @@ class LiteContext(QObject):
         except Exception:
             logger.exception('LiteContext.swipe failed')
 
+    def _current_numpy_image(self) -> Optional[np.ndarray]:
+        """Numpy RGB image for OCR / template matching. In static mode this
+        is the cached image; otherwise a fresh device screenshot."""
+        if self._static_mode:
+            return self._static_image_rgb
+        try:
+            return self.device.screenshot()
+        except Exception:
+            logger.exception('screenshot failed for test slot')
+            return None
+
     @Slot(str, str, result='QString')
     def test_ocr(self, roi: str, mode: str) -> str:
-        """Run OCR over the given ROI on a fresh screenshot. mode in
-        {Full,Single,Digit,DigitCounter,Duration,Quantity}. Returns JSON."""
+        """Run OCR over the given ROI. mode in
+        {Full,Single,Digit,DigitCounter,Duration,Quantity}. Returns JSON.
+        Uses the static image when in static mode."""
         from module.atom.ocr import RuleOcr
         bbox = self._parse_roi(roi)
         if bbox is None:
             return json.dumps({'ok': False, 'error': 'bad roi'})
+        img = self._current_numpy_image()
+        if img is None:
+            return json.dumps({'ok': False, 'error': 'no image'})
         try:
             rule = RuleOcr(roi=bbox, area=bbox, mode=mode or 'Full',
                            method='Default', keyword='', name='tools_test')
-            img = self.device.screenshot()
             result = rule.ocr(img)
             return json.dumps({'ok': True, 'result': str(result)},
                               ensure_ascii=False)
@@ -285,8 +420,8 @@ class LiteContext(QObject):
     def test_image_match(self, roi_front: str, roi_back: str,
                          threshold: float, file_path: str) -> str:
         """Match the template at ``file_path`` (front ROI cropped from it)
-        against the live screenshot inside ``roi_back``. Returns JSON
-        ``{ok, found, score, x, y}``."""
+        against the current image inside ``roi_back``. Uses the static image
+        when in static mode. Returns JSON ``{ok, found}``."""
         from module.atom.image import RuleImage
         front = self._parse_roi(roi_front)
         back = self._parse_roi(roi_back)
@@ -294,11 +429,13 @@ class LiteContext(QObject):
             return json.dumps({'ok': False, 'error': 'bad roi'})
         if not file_path or not os.path.exists(file_path):
             return json.dumps({'ok': False, 'error': 'file not found'})
+        img = self._current_numpy_image()
+        if img is None:
+            return json.dumps({'ok': False, 'error': 'no image'})
         try:
             rule = RuleImage(roi_front=front, roi_back=back,
                              threshold=float(threshold or 0.8),
                              method='Template matching', file=file_path)
-            img = self.device.screenshot()
             found = bool(rule.match(img))
             return json.dumps({'ok': True, 'found': found})
         except Exception as e:

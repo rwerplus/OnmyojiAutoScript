@@ -125,7 +125,14 @@ FluWindow {
     }
 
     Component.onCompleted: {
-        // Default landing tool — 图像规则 (Image Rule) is the most commonly used.
-        loadTool("图像规则")
+        // Honor --tool / profile.tool when set, otherwise fall back to 图像规则.
+        var def = process_manager.default_tool ? process_manager.default_tool() : ""
+        if (!def) def = "图像规则"
+        // If the requested tool is unknown, loadTool() warns and we fall back.
+        loadTool(def)
+        if (process_manager.is_static_mode && process_manager.is_static_mode()) {
+            window.title = "OAS 工具 (静态图: " + process_manager.static_image_path() + ")"
+            appbar.title = window.title
+        }
     }
 }
