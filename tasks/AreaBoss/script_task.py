@@ -18,6 +18,7 @@ from tasks.AreaBoss.config_boss import AreaBossFloor
 from module.logger import logger
 from module.exception import TaskEnd
 from module.atom.image import RuleImage
+from module.base.timer import Timer
 from typing import List
 
 
@@ -409,6 +410,8 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
         self.ui_click(self.I_FILTER, self.I_AB_FILTER_OPENED, interval=3)
 
     def switch_to_collect(self):
+        timer = Timer(15).start()
+        recoveries = 0
         while 1:
             self.screenshot()
             if self.appear(self.I_AB_FILTER_TITLE_COLLECTION):
@@ -416,8 +419,21 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
             if self.appear(self.I_AB_FILTER_OPENED):
                 self.click(self.C_AB_COLLECTION_BTN, 1.5)
                 continue
+            # 筛选不在屏幕上 -> 重开
+            if recoveries >= 3:
+                logger.error('switch_to_collect: filter cannot be opened after 3 recoveries')
+                return
+            if timer.reached():
+                logger.warning('switch_to_collect: timeout, re-open filter')
+            else:
+                logger.warning('switch_to_collect: filter not visible, re-open filter')
+            self.open_filter()
+            timer.reset()
+            recoveries += 1
 
     def switch_to_famous(self):
+        timer = Timer(15).start()
+        recoveries = 0
         while 1:
             self.screenshot()
             if self.appear(self.I_AB_FILTER_TITLE_FAMOUS):
@@ -425,6 +441,17 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
             if self.appear(self.I_AB_FILTER_OPENED):
                 self.click(self.C_AB_FAMOUS_BTN, 1.5)
                 continue
+            # 筛选不在屏幕上 -> 重开
+            if recoveries >= 3:
+                logger.error('switch_to_famous: filter cannot be opened after 3 recoveries')
+                return
+            if timer.reached():
+                logger.warning('switch_to_famous: timeout, re-open filter')
+            else:
+                logger.warning('switch_to_famous: filter not visible, re-open filter')
+            self.open_filter()
+            timer.reset()
+            recoveries += 1
 
     def switch_to_reward(self):
         self.open_filter()
