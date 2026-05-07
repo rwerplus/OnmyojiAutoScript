@@ -421,9 +421,23 @@ class ScriptTask(StateMachine, GameUi, BaseActivity, SwitchSoul, ActivityShikiga
         # Watchdog: 连续多少轮所有已知锚点都没识别到. 用于兜底 "点击屏幕继续" 类
         # 中间结算屏 -- 比如 AP100 大量御魂图标盖住 I_REWARD 锚点导致主流程死循环.
         no_progress_cnt = 0
+        # AP100 (雪山修行) 战斗时长稳定在 ~80s. 之前在战斗过程中可能因偶发误识 (REWARD/FALSE/watchdog)
+        # 触发提前结束. 这里加一个 min-duration 闸口: 仅 ap100 启用, 闸口内只跑 anti-detect,
+        # 跳过所有结束检测和 watchdog. 时长可在 GeneralBattleConfig.ap100_min_battle_seconds 配置.
+        min_battle_timer = None
+        if self.climb_type == 'ap100':
+            min_seconds = getattr(self.conf.general_battle, 'ap100_min_battle_seconds', 80)
+            if min_seconds and min_seconds > 0:
+                min_battle_timer = Timer(min_seconds).start()
+                logger.info(f'AP100 min battle duration gate: {min_seconds}s, ignore end-detection until reached')
         while 1:
             sleep(random.uniform(0.5, 1.5))
             self.screenshot()
+            # AP100 min-duration 闸口: 闸口内仅跑 anti-detect, 跳过结束检测和 watchdog
+            if min_battle_timer is not None and not min_battle_timer.reached():
+                if random_click_swipt_enable:
+                    self.random_click_swipt()
+                continue
             # 达到最大重试次数则直接交给上层处理
             if ok_cnt > max_retry:
                 break

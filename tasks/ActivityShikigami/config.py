@@ -94,6 +94,7 @@ class GeneralBattleConfig(BaseModel):
     enable_ap100_green: bool = Field(default=False, description='是否开启100体爬塔绿标')
     ap100_green_mark: GreenMarkType = Field(default=GreenMarkType.GREEN_LEFT1, description='100体爬塔绿标位置')
     enable_ap100_anti_detect: bool = Field(default=False, description='100体爬塔战斗过程是否随机点击或滑动')
+    ap100_min_battle_seconds: int = Field(default=80, description='100体爬塔战斗最短时长(秒), 此时间内忽略战斗结束检测, 防止战斗中误判提前结束')
 
 
 class ActivityShikigami(ConfigBase):

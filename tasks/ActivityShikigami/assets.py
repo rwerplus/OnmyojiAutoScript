@@ -72,13 +72,13 @@ class ActivityShikigamiAssets:
 	# 从main进入到式神录 
 	I_BATTLE_MAIN_TO_RECORDS = RuleImage(roi_front=(999,557,39,42), roi_back=(966,534,140,100), threshold=0.7, method="Template matching", file="./tasks/ActivityShikigami/as/as_battle_main_to_records.png")
 	# 体力爬塔 
-	I_TO_BATTLE_MAIN_2 = RuleImage(roi_front=(64,288,132,26), roi_back=(0,270,312,100), threshold=0.65, method="Template matching", file="./tasks/ActivityShikigami/as/as_to_battle_main_2.png")
+	I_TO_BATTLE_MAIN_2 = RuleImage(roi_front=(65,198,97,25), roi_back=(0,185,312,53), threshold=0.65, method="Template matching", file="./tasks/ActivityShikigami/as/as_to_battle_main_2.png")
 	# 确认跳过 
 	I_CONFIRM_SKIP = RuleImage(roi_front=(707,442,137,38), roi_back=(656,397,231,124), threshold=0.8, method="Template matching", file="./tasks/ActivityShikigami/as/as_confirm_skip.png")
 	# 是否进入了体力爬塔界面 
 	I_CHECK_BATTLE_MAIN_2 = RuleImage(roi_front=(149,19,134,33), roi_back=(72,0,264,75), threshold=0.8, method="Template matching", file="./tasks/ActivityShikigami/as/as_check_battle_main_2.png")
 	# 100体力爬塔界面 
-	I_AP_100_CHECK = RuleImage(roi_front=(65,195,98,30), roi_back=(60,194,109,35), threshold=0.8, method="Template matching", file="./tasks/ActivityShikigami/as/as_ap_100_check.png")
+	I_AP_100_CHECK = RuleImage(roi_front=(67,104,92,26), roi_back=(61,99,109,35), threshold=0.8, method="Template matching", file="./tasks/ActivityShikigami/as/as_ap_100_check.png")
 	# 是否进入了体力100爬塔界面 
 	I_AP_100_CHECK_MAIN = RuleImage(roi_front=(86,15,138,41), roi_back=(73,5,218,76), threshold=0.8, method="Template matching", file="./tasks/ActivityShikigami/as/as_ap_100_check_main.png")
 	# 是否在主战场界面 
